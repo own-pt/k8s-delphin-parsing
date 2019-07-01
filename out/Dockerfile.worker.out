@@ -1,0 +1,7 @@
+FROM base-worker:latest
+
+COPY out.py out.sh /root/
+
+RUN chmod +x /root/out.sh
+
+CMD ./out.sh

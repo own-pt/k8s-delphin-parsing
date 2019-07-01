@@ -1,0 +1,120 @@
+# #REDIS
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: redis
+    role: master
+    tier: backend
+  name: redis-master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - image: redis
+        name: redis-master
+        ports:
+        - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: redis
+  name: redis-master
+spec:
+  ports:
+  - port: 6379
+    protocol: TCP
+    targetPort: 6379
+  selector:
+    app: redis
+---
+# INIT ENQUEUE JOB
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-enqueue
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      containers:
+        - image: us.icr.io/<my_namespace>/init:<my_tag>
+          name: enqueue
+          imagePullPolicy: Always
+          env:
+          - name: INPUT_DIR
+            value: "/root/data/<input_dir>/"
+          volumeMounts:
+          - name: data
+            mountPath: /root/data/
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: <pvc_name>
+
+      imagePullSecrets:
+        - name: <secret_name>
+      restartPolicy: Never
+---
+# PARSER WORKERS
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    role: worker
+  name: parser-worker
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        role: worker
+    spec:
+      containers:
+        - image: us.icr.io/<my_namespace>/parser-worker:<my_tag>
+          imagePullPolicy: Always
+          name: parser
+          env:
+          - name:  ACE_ARGS
+            value: "--max-chart-megabytes=15000 --max-unpack-megabytes=16000 --timeout=60 --rooted-derivation --max-words=150 --ubertagging=0.000000001"
+      imagePullSecrets:
+        - name: <secret_name>
+---
+# OUTPUT WORKER
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    role: worker
+  name: output-worker
+spec:
+  template:
+    metadata:
+      labels:
+        role: worker
+    spec:
+      containers:
+        - image: us.icr.io/<my_namespace>/output-worker:<my_tag>
+          imagePullPolicy: Always
+          name: output
+          env:
+          - name: OUTPUT_DIR
+            value: "/root/data/<output-dir>"
+          volumeMounts:
+          - name: data
+            mountPath: /root/data/
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: <pvc_name>
+      imagePullSecrets:
+        - name: <secret_name>

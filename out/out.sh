@@ -1,0 +1,9 @@
+#!/bin/bash
+
+mkdir -p $OUTPUT_DIR
+
+rq info --config settings  2> /dev/null
+
+while [ $? != 0 ]; do sleep 1; rq info --config settings  2> /dev/null ; done 
+
+rq worker --config settings out
