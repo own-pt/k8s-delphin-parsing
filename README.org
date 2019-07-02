@@ -1,15 +1,15 @@
-#+Title: k8s-batch-parser
+#+Title: k8s-delphin-parsing
 
 
-* Create a k8 cluster at IBM Cloud
+** Create a k8 cluster at IBM Cloud
 
 Follow https://cloud.ibm.com/docs/containers?topic=containers-clusters
 
-* Create a Cloud Object Storage instance
+** Create a Cloud Object Storage instance
 
 TODO
 
-* Commands 
+** Commands 
 
 #+BEGIN_SRC bash
 
