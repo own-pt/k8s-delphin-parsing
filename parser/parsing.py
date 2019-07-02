@@ -1,8 +1,7 @@
 from delphin.interfaces import ace
 from delphin.mrs import simplemrs, prolog, eds
-from redis import StrictRedis
-from rq import Queue
-from settings import REDIS_HOST, REDIS_PORT
+import logging
+import json
 import os
 import re
 
@@ -39,9 +38,22 @@ def get_pred(ep):
                 lemma=get_lemma(ep))
 
 
+def save(result):
+    logging.getLogger().setLevel(logging.INFO)
+
+    doc = result['doc']
+    line = result['line']
+
+    logging.info('Write %s line %s', doc, line)
+
+    outdir = os.getenv("OUTPUT_DIR")
+
+    f = open(outdir + doc + '_' + line, "w+")
+    f.write(json.dumps(result))
+    f.close()
+
+
 def parse(res):
-    q = Queue('out', connection=StrictRedis(
-        host=REDIS_HOST, port=REDIS_PORT))
     data = res.copy()
     sent = res['sent']
 
@@ -95,6 +107,6 @@ def parse(res):
     if "memory" in infos:
         data["memory"] = res["others"]
 
-    q.enqueue("out.put", data)
+    save(data)
 
     return True
