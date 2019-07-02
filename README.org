@@ -1,23 +1,31 @@
 #+Title: k8s-batch-parser
 
+
 * Create a k8 cluster at IBM Cloud
-Follow LINK
 
-* Creating a Cloud Object Storage instance
+Follow https://cloud.ibm.com/docs/containers?topic=containers-clusters
 
-Follow https://cloud.ibm.com/docs/containers?topic=containers-object_storage
+* Create a Cloud Object Storage instance
+
+TODO
 
 * Commands 
 
 #+BEGIN_SRC bash
 
+  # login in to your account and set the context for your cluster.
+  
   $ ibmcloud login -a cloud.ibm.com -r us-south -g Default --sso
 
   $ ibmcloud ks cluster-config --cluster <cluster_name>
 
-  $ ibmcloud resource service-instance <service_name>  | grep GUID
+  # Creating a secret for the object storage service credentials https://cloud.ibm.com/docs/containers?topic=containers-object_storage&locale=en-us#create_cos_secret
+  
+  $ ibmcloud resource service-instance <service_name> | grep GUID
 
   $ kubectl create secret generic cos-write-access --type=ibm/ibmc-s3fs --from-literal=api-key=<api_key> --from-literal=service-instance-id=<service_instance_guid>
+
+  # Setting up Helm https://cloud.ibm.com/docs/containers?topic=containers-helm&locale=en-us#public_helm_install
 
   $ kubectl create serviceaccount tiller -n kube-system
 
@@ -29,6 +37,8 @@ Follow https://cloud.ibm.com/docs/containers?topic=containers-object_storage
 
   $ kubectl get pods -n kube-system -l app=helm
 
+  # Installing the IBM Cloud Object Storage plug-in https://cloud.ibm.com/docs/containers?topic=containers-object_storage&locale=en-us#install_cos
+  
   $ helm repo add iks-charts https://icr.io/helm/iks-charts
 
   $ helm repo update
@@ -43,10 +53,13 @@ Follow https://cloud.ibm.com/docs/containers?topic=containers-object_storage
 
   $ helm ibmc install iks-charts/ibm-object-storage-plugin --name ibm-object-storage-plugin
 
+  # Adding file storage https://cloud.ibm.com/docs/containers?topic=containers-file_storage&locale=pt-br#add_file
   # edit pvc.yaml
   
   $ kubectl apply -f pvc.yaml
 
+  # Building and pushing the images to your private registry
+  
   $ ibmcloud cr namespace-add test-parser
 
   $ ibmcloud cr login
@@ -65,17 +78,11 @@ Follow https://cloud.ibm.com/docs/containers?topic=containers-object_storage
 
   $ docker push us.icr.io/<my_namespace>/parser-worker:<my_tag>
   
-  $ cd ../out/
-  
-  $ docker build -f Dockerfile.worker.out -t us.icr.io/<my_namespace>/output-worker:<my_tag> .
-
-  $ docker push us.icr.io/<my_namespace>/output-worker:<my_tag>
-
   $ cd ..
 
-  $ ibmcloud ks cluster-pull-secret-apply --cluster <cluster_name>
+  # Creating an image pull secret https://cloud.ibm.com/docs/containers?topic=containers-images#other_registry_accounts
 
-  $ kubectl create namespace test-parser
+  $ ibmcloud ks cluster-pull-secret-apply --cluster <cluster_name>
 
   $ ibmcloud iam service-id-create <cluster_name>-<kube_namespace>-id --description "Service ID for IBM Cloud Container Registry in Kubernetes cluster <cluster_name> namespace <kube_namespace>"
 
@@ -87,7 +94,6 @@ Follow https://cloud.ibm.com/docs/containers?topic=containers-object_storage
 
   # edit pipeline.yml
   
-  $ kubectl create -f pipeline.yml 
-  
+  $ kubectl create -f pipeline.yml  
 #+END_SRC
 
