@@ -57,8 +57,7 @@ def parse(res):
     data = res.copy()
     sent = res['sent']
 
-    infos = res.get('result_infos',
-                    ["preds", "treal", "tcpu", "total", "memory"])
+    infos = res.get('result_infos', ["preds", "treal", "tcpu", "total", "memory"])
     ace_args = os.getenv('ACE_ARGS')
 
     if ace_args:

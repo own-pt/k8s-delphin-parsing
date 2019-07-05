@@ -1,19 +1,19 @@
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: <pvc_name>
-  namespace: <namespace>
+  name: mypvc
+  namespace: default
   annotations:
-    ibm.io/auto-create-bucket: "<true_or_false>"
-    ibm.io/auto-delete-bucket: "<true_or_false>"
-    ibm.io/bucket: "<bucket_name>"
-    ibm.io/object-path: "<bucket_subdirectory>"
-    ibm.io/secret-name: "<secret_name>"
-    ibm.io/endpoint: "https://<s3fs_service_endpoint>"
+    ibm.io/auto-create-bucket: "false"
+    ibm.io/auto-delete-bucket: "false"
+    ibm.io/bucket: "parser"
+    # ibm.io/object-path: ""
+    ibm.io/secret-name: "cos-write-access"
+    ibm.io/endpoint: "https://s3.us-south.cloud-object-storage.appdomain.cloud"
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 8Gi # Enter a fictitious value
-  storageClassName: <storage_class>
+  storageClassName: ibmc-s3fs-standard-regional

@@ -47,22 +47,22 @@ spec:
   template:
     spec:
       containers:
-        - image: us.icr.io/<my_namespace>/init:<my_tag>
+        - image: us.icr.io/ar-parser/init:latest
           name: enqueue
           imagePullPolicy: Always
           env:
           - name: INPUT_DIR
-            value: "/root/data/<input_dir>/"
+            value: "/root/data/"
           volumeMounts:
           - name: data
             mountPath: /root/data/
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: <pvc_name>
+            claimName: mypvc
 
       imagePullSecrets:
-        - name: <secret_name>
+        - name: mysecret
       restartPolicy: Never
 ---
 # PARSER WORKERS
@@ -80,41 +80,22 @@ spec:
         role: worker
     spec:
       containers:
-        - image: us.icr.io/<my_namespace>/parser-worker:<my_tag>
+        - image: us.icr.io/ar-parser/parser-worker:latest
           imagePullPolicy: Always
           name: parser
           env:
           - name:  ACE_ARGS
-            value: "--max-chart-megabytes=15000 --max-unpack-megabytes=16000 --timeout=60 --rooted-derivation --max-words=150 --ubertagging=0.000000001"
-      imagePullSecrets:
-        - name: <secret_name>
----
-# OUTPUT WORKER
-apiVersion: extensions/v1beta1
-kind: Deployment
-metadata:
-  labels:
-    role: worker
-  name: output-worker
-spec:
-  template:
-    metadata:
-      labels:
-        role: worker
-    spec:
-      containers:
-        - image: us.icr.io/<my_namespace>/output-worker:<my_tag>
-          imagePullPolicy: Always
-          name: output
+            value: "--max-chart-megabytes=1500 --max-unpack-megabytes=1600 --timeout=60 --rooted-derivation --max-words=150 --ubertagging=0.000000001"
           env:
           - name: OUTPUT_DIR
-            value: "/root/data/<output-dir>"
+            value: "/root/data/out/"
           volumeMounts:
           - name: data
             mountPath: /root/data/
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: <pvc_name>
+            claimName: mypvc
       imagePullSecrets:
-        - name: <secret_name>
+        - name: mysecret
+          
