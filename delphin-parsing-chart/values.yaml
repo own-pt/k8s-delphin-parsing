@@ -1,0 +1,21 @@
+
+# repositories that contains the images
+images:
+  init: hmuniz/init:latest
+  parser: hmuniz/worker-parser:latest
+
+# edit:
+  
+ace:
+  options: "--max-chart-megabytes=1500 --max-unpack-megabytes=1600 --timeout=60 --rooted-derivation --max-words=150 --ubertagging=0.000000001"
+  replicas: 1
+
+credential:
+  apikey: 
+  guid: 
+
+cos:
+  inbucket: 
+  outbucket: 
+  endpoint: 
+  storageClassName: 

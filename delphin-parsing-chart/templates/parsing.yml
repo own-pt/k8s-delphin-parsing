@@ -47,7 +47,7 @@ spec:
   template:
     spec:
       containers:
-        - image: us.icr.io/ar-parser/init:latest
+        - image: {{ .Values.images.init }}
           name: enqueue
           imagePullPolicy: Always
           env:
@@ -56,14 +56,11 @@ spec:
           volumeMounts:
           - name: data
             mountPath: /root/data/
+      restartPolicy: Never
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: mypvc
-
-      imagePullSecrets:
-        - name: mysecret
-      restartPolicy: Never
+            claimName: inpvc
 ---
 # PARSER WORKERS
 apiVersion: extensions/v1beta1
@@ -73,29 +70,26 @@ metadata:
     role: worker
   name: parser-worker
 spec:
-  replicas: 1
+  replicas: {{ .Values.ace.replicas }}
   template:
     metadata:
       labels:
         role: worker
     spec:
       containers:
-        - image: us.icr.io/ar-parser/parser-worker:latest
+        - image: {{ .Values.images.parser }}
           imagePullPolicy: Always
           name: parser
           env:
           - name:  ACE_ARGS
-            value: "--max-chart-megabytes=1500 --max-unpack-megabytes=1600 --timeout=60 --rooted-derivation --max-words=150 --ubertagging=0.000000001"
+            value: {{ .Values.ace.options }} 
           env:
           - name: OUTPUT_DIR
-            value: "/root/data/out/"
+            value:  "/root/data/"
           volumeMounts:
           - name: data
             mountPath: /root/data/
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: mypvc
-      imagePullSecrets:
-        - name: mysecret
-          
+            claimName: outpvc

@@ -1,40 +1,37 @@
 #+Title: k8s-delphin-parsing
 
-** Create a k8 cluster at IBM Cloud
+It's a high-performance architecture for 'deep' linguistic processing
+of documents with [[http://delph-in.net/][DELPHI-IN]] tools [[https://github.com/delph-in/pydelphin][pyDelphin]] and [[http://sweaglesw.org/linguistics/ace/][ACE]] combined with a
+parallel processing using kubernetes and [[https://github.com/rq/rq][RQ]].
 
-Follow https://cloud.ibm.com/docs/containers?topic=containers-clusters
+* Running the k8s-delphin-parsing on IBM Cloud
 
-** Create a Cloud Object Storage instance
+** Prerequisites
+It is important to ensure that you have IBM Cloud account, if you do
+not [[https://console.bluemix.net/registration/?cm_mmc=Display-SampleApp-_-IBMCloudSampleApp-DatabasesForRedis][sign up here]]. You also need to instanciate [[https://cloud.ibm.com/kubernetes/catalog/cluster/create][IBM Cloud Kubernetes
+Service]] and [[https://cloud.ibm.com/catalog/services/cloud-object-storage][IBM Cloud Object Storage]]. Create a IBM Cloud Object
+Storage service [[https://cloud.ibm.com/docs/containers?topic=containers-object_storage&locale=en-us#service_credentials][credential]]. Ensure that you have installed:
 
-TODO
+- [[https://kubernetes.io/docs/tasks/tools/install-kubectl/][kubectl]]
+- [[https://cloud.ibm.com/docs/cli/reference/ibmcloud?topic=cloud-cli-install-ibmcloud-cli][ibmcloud cli]]
+- [[https://helm.sh/docs/using_helm/][helm]]
 
-** Commands 
+** Deploying
+First step is log in your IBM Cloud account and then set the cluster
+you created as the context for this session:
 
-Create the cluster:
-
-#+begin_src bash
+#+begin_src bash :var cluster_name=mycluster
   ibmcloud login -a cloud.ibm.com -r us-south -g Default --sso
-  ibmcloud ks cluster-config --cluster <cluster_name>
+  ibmcloud ks cluster-config --cluster $cluster_name
 #+end_src
 
-[[https://cloud.ibm.com/docs/containers?topic=containers-object_storage&locale=en-us#create_cos_secret][Creating]] a secret for the object storage service credentials (note
-that we have first create the credentials in the ibm cloud interface)
-
-#+begin_src bash
-ibmcloud resource service-instance <service_name> | grep GUID
-kubectl create secret generic cos-write-access --type=ibm/ibmc-s3fs --from-literal=api-key=<api_key> --from-literal=service-instance-id=<service_instance_guid>
-#+end_src
-
-[[https://cloud.ibm.com/docs/containers?topic=containers-helm&locale=en-us#public_helm_install][Setting up Helm]]:
+Installing Tiller, the Helm server, in your cluster:
 
 #+begin_src 
 kubectl create serviceaccount tiller -n kube-system
 kubectl create clusterrolebinding tiller --clusterrole=cluster-admin --serviceaccount=kube-system:tiller -n kube-system
-kubectl get serviceaccount -n kube-system tiller
 helm init --service-account tiller
-kubectl get pods -n kube-system -l app=helm
 #+end_src
-
 
 Installing the [[https://cloud.ibm.com/docs/containers?topic=containers-object_storage&locale=en-us#install_cos][IBM Cloud Object Storage plug-in]]:
   
@@ -44,53 +41,40 @@ helm repo update
 helm fetch --untar iks-charts/ibm-object-storage-plugin
 helm plugin install ./ibm-object-storage-plugin/helm-ibmc
 chmod 755 ~/.helm/plugins/helm-ibmc/ibmc.sh
-helm ibmc --help
 helm ibmc install iks-charts/ibm-object-storage-plugin --name ibm-object-storage-plugin
 #+end_src
 
+Now fill the =value.ymlp= file. Values decscription:
 
-Adding file storage https://cloud.ibm.com/docs/containers?topic=containers-object_storage&locale=pt-br#add_cos
+- =ace.options= ACE Command-line Options
+- =ace.replicas= number of ace instances
+- =credentials.apikey= the API key that you can retrieve from your IBM
+  Cloud Object Storage service credentials earlier
+- =credentials.guid= the GUID of your IBM Cloud Object Storage service
+  instance you can get that with =ibmcloud resource service-instance
+  <service_name> | grep GUI=
+- =cos.inbucket= the name of the existing bucket with the data that you
+  want to process
+- =cos.outbucket= the name of the existing bucket where the results
+  will be save
+- =cos.endpoint= see https://cloud.ibm.com/docs/services/cloud-object-storage/basics?topic=cloud-object-storage-endpoints#select-regions-and-endpoints
+- =cos.storageClassName= find your service instance in the IBM Cloud
+  dashboard and review the Class and Location of your existing
+  bucket. Then, use the appropriate [[https://cloud.ibm.com/docs/containers?topic=containers-object_storage&locale=en-us#cos_storageclass_reference][storage class]].
 
-edit pvc.yaml and
+Finally, deploy:
+#+BEGIN_SRC bash
+helm install ./delphin-parsing-chart/
+#+END_SRC
 
-#+begin_src 
-kubectl apply -f pvc.yaml
-#+end_src
+* Architecture
+#+CAPTION: Diagram
+#+NAME:   fig:diagram
+[[./diagram.png]]
 
-(check version of kubectl command)
+* Authors
+- [[http://arademaker.github.io/][Alexandre Rademaker]]
+- Henrique Muniz
 
-
-Building and pushing the images to your private registry:
-
-#+begin_src bash :var my_namespace=ar-parser :var my_tag=latest
-  ibmcloud cr namespace-add $my_namespace
-  ibmcloud cr login
-  docker build -t base-worker .
-  cd init/
-  docker build -f Dockerfile.init -t  us.icr.io/$my_namespace/init:$tag .
-  docker push us.icr.io/$my_namespace/init:$my_tag
-  cd ../parser/
-  docker build -f Dockerfile.worker.parser -t us.icr.io/$my_namespace/parser-worker:$tag .
-  docker push us.icr.io/$my_namespace/parser-worker:$my_tag
-  cd ..
-#+end_src
-  
-Upload the files to the obj store.
-
-Creating an image pull secret https://cloud.ibm.com/docs/containers?topic=containers-images#other_registry_accounts
-
-#+begin_src bash
-ibmcloud iam service-id-create <cluster_name>-<kube_namespace>-id --description "Service ID for IBM Cloud Container Registry in Kubernetes cluster <cluster_name> namespace <kube_namespace>"
-ibmcloud iam service-policy-create <cluster_service_ID> --roles <service_access_role> --service-name container-registry [--region <IAM_region>] [--resource-type namespace --resource <registry_namespace>]
-ibmcloud iam service-api-key-create <cluster_name>-<kube_namespace>-key <cluster_name>-<kube_namespace>-id --description "API key for service ID <service_id> in Kubernetes cluster <cluster_name> namespace <kube_namespace>"
-kubectl --namespace <kubernetes_namespace> create secret docker-registry <secret_name> --docker-server=<registry_URL> --docker-username=iamapikey --docker-password=<api_key_value> --docker-email=<docker_email>
-#+end_src
-
-
-Edit pipeline.yml
-  
-#+begin_src bash
-kubectl create -f pipeline.yml  
-#+end_src
-
-
+* Lincese
+TODO

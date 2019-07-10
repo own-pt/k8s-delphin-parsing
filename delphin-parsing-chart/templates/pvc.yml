@@ -1,0 +1,37 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: inpvc
+  namespace: default
+  annotations:
+    ibm.io/auto-create-bucket: "false"
+    ibm.io/auto-delete-bucket: "false"
+    ibm.io/bucket: "{{ .Values.cos.inbucket }}"
+    ibm.io/secret-name: "cos-write-access"
+    ibm.io/endpoint: "{{ .Values.cos.endpoint }}"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi # Enter a fictitious value
+  storageClassName: {{ .Values.cos.storageClassName }}
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: outpvc
+  namespace: default
+  annotations:
+    ibm.io/auto-create-bucket: "false"
+    ibm.io/auto-delete-bucket: "false"
+    ibm.io/bucket: "{{ .Values.cos.outbucket }}"
+    ibm.io/secret-name: "cos-write-access"
+    ibm.io/endpoint: "{{ .Values.cos.endpoint }}"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi # Enter a fictitious value
+  storageClassName: {{ .Values.cos.storageClassName }}
