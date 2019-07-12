@@ -44,7 +44,7 @@ chmod 755 ~/.helm/plugins/helm-ibmc/ibmc.sh
 helm ibmc install iks-charts/ibm-object-storage-plugin --name ibm-object-storage-plugin
 #+end_src
 
-Now fill the =value.ymlp= file. Values decscription:
+Now fill the =delphin-parsing-chart/values.yaml= file. Values decscription:
 
 - =ace.options= ACE Command-line Options
 - =ace.replicas= number of ace instances

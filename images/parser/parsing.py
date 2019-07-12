@@ -94,17 +94,18 @@ def parse(res):
 
         if "preds" in infos:
             data["preds"] = [get_pred(ep) for ep in x.eps()]
+
+        if "treal" in infos:
+            data["treal"] = res["treal"]
+        if "tcpu" in infos:
+            data["tcpu"] = res["tcpu"]
+        if "total" in infos:
+            data["total"] = res["total"]
+        if "memory" in infos:
+            data["memory"] = res["others"]
+
     else:
         data["parsed"] = False
-
-    if "treal" in infos:
-        data["treal"] = res["treal"]
-    if "tcpu" in infos:
-        data["tcpu"] = res["tcpu"]
-    if "total" in infos:
-        data["total"] = res["total"]
-    if "memory" in infos:
-        data["memory"] = res["others"]
 
     save(data)
 

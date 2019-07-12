@@ -82,7 +82,7 @@ spec:
           name: parser
           env:
           - name:  ACE_ARGS
-            value: {{ .Values.ace.options }} 
+            value: "{{ .Values.ace.options }}"
           env:
           - name: OUTPUT_DIR
             value:  "/root/data/"
