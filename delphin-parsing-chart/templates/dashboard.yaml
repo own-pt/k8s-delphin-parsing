@@ -1,0 +1,40 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    role: dashboard
+  name: dashboard
+spec:
+  template:
+    metadata:
+      labels:
+        role: dashboard
+    spec:
+      containers:
+        - image: {{ .Values.images.dashboard }}
+          imagePullPolicy: Always
+          name: dashboard
+          stdin: true
+          tty: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    role: dashboard
+  name: dashboard-service
+  selfLink: /api/v1/namespaces/default/services/dashboard-service
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - port: 9181
+    protocol: TCP
+    targetPort: 9181
+    nodePort: 30001
+  selector:
+    role: dashboard
+  sessionAffinity: None
+  type: NodePort
+status:
+  loadBalancer: {}

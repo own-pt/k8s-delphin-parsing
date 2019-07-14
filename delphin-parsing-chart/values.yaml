@@ -3,7 +3,7 @@
 images:
   init: hmuniz/init:latest
   parser: hmuniz/worker-parser:latest
-
+  dashboard: hmuniz/dashboard:latest
 # edit:
   
 ace:
