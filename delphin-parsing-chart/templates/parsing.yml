@@ -83,7 +83,6 @@ spec:
           env:
           - name:  ACE_ARGS
             value: "{{ .Values.ace.options }}"
-          env:
           - name: OUTPUT_DIR
             value:  "/root/data/"
           volumeMounts:
