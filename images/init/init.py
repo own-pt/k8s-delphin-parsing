@@ -19,7 +19,7 @@ def put_sents(docs, queue, init_time, in_dir):
             if sent != '':
                 queue.enqueue("parsing.parse", {"sent": sent.strip(),
                                                 "doc": doc.split('/')[-1],
-                                                "line": str(line),
+                                                "line_num": str(line),
                                                 "init_time": init_time,
                                                 "dir": in_dir})
                 line = line + 1
